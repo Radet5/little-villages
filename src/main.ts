@@ -138,7 +138,7 @@ const spriteLoader = new SpriteLoader();
 await spriteLoader.loadSpriteSheet();
 const villagers: Array<Villager> = [];
 for (let i = 0; i < population; i++) {
-  const villager = new Villager(spriteLoader.getVillagerAnimationSet("woman"), streetCorners, villageMap);
+  const villager = new Villager(spriteLoader, streetCorners, villageMap);
   villagers.push(villager);
 
   app.stage.addChild(villager.getSprites());

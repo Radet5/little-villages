@@ -1,23 +1,29 @@
 import * as PIXI from 'pixi.js';
-import womanIMG from '../../../assets/sprites/4 Woman/Woman.png'
-import manIMG from '../../../assets/sprites/3 Man/Man.png';
-import oldWomanIMG from '../../../assets/sprites/2 Old_woman/Old_woman.png';
-import oldManIMG from '../../../assets/sprites/1 Old_man/Old_man.png';
-import girlIMG from '../../../assets/sprites/6 Girl/Girl.png';
-import boyIMG from '../../../assets/sprites/5 Boy/Boy.png';
 import { dist, direction, Vec2 } from '@thi.ng/vectors';
 import { Vec } from '@thi.ng/vectors/api';
 
 import { shortestPath } from '../../../utils';
-import { AnimatedSprite, Container } from 'pixi.js';
+import { Container } from 'pixi.js';
 
-import type { VillagerAnimationSet } from '../../spriteloader/spriteloader';
+import type { SpriteLoader, VillagerAnimationSet } from '../../spriteloader/spriteloader';
+
+enum Age {
+    child = "child",
+    adult = "adult",
+    old = "old",
+};
+
+enum GenderPresentation {
+    femme = "Femme",
+    masc = "Masc",
+};
 
 export class Villager {
   
   private speed: number = 0.5;
   private position: Vec2;
   private currentNodeIndex: number;
+  private spriteLoader: SpriteLoader;
   private animations: VillagerAnimationSet;
   private sprites: Container;
   private targetIndex:number = 0;
@@ -25,14 +31,26 @@ export class Villager {
   private streetCorners;
   private villageMap;
 
-  constructor(animationSet: VillagerAnimationSet, streetCorners: Array<Vec>, villageMap: Array<Array<number>>) {
+  private age: Age;
+  private genderPresentation: GenderPresentation;
+
+  constructor(spriteLoader: SpriteLoader, streetCorners: Array<Vec>, villageMap: Array<Array<number>>) {
     this.streetCorners = streetCorners;
     this.villageMap = villageMap;
 
     this.currentNodeIndex = Math.trunc(Math.random() * this.streetCorners.length);
     this.position = new Vec2([streetCorners[this.currentNodeIndex][0], streetCorners[this.currentNodeIndex][1]]);
 
-    this.animations = animationSet;
+    this.spriteLoader = spriteLoader;
+
+    this.age = this.rollForAge();
+
+    if (this.age == Age.old) this.speed *= 0.60;
+    else if (this.age == Age.child) this.speed *= 1.25;
+
+    this.genderPresentation = this.rollForGenderPres();
+
+    this.animations = this.spriteLoader.getVillagerAnimationSet(this.age + this.genderPresentation);
     this.sprites = new PIXI.Container();
     this.initSprite();
   }
@@ -60,6 +78,39 @@ export class Villager {
     this.sprites.scale.y = 0.5;
     this.sprites.position.x = this.position[0];
     this.sprites.position.y = this.position[1];
+  }
+
+  private rollForAge() {
+    const diceRoll = Math.trunc(Math.random() * 3);
+    let age: Age;
+    switch (diceRoll) {
+        case 0:
+            age = Age.child;
+            break;
+        case 1:
+            age = Age.adult;
+            break;
+        default:
+            age = Age.old
+            break;
+    }
+
+    return age;
+  }
+
+  private rollForGenderPres() {
+    const diceRoll = Math.trunc(Math.random() * 2);
+    let genderPresentation: GenderPresentation;
+    switch (diceRoll) {
+        case 0:
+            genderPresentation = GenderPresentation.masc;
+            break;
+        default:
+            genderPresentation = GenderPresentation.femme;
+            break;
+    }
+
+    return genderPresentation;
   }
 
   private pickDestination() {
