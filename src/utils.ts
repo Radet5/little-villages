@@ -37,8 +37,8 @@ export const seededRandomNumberList = (seed: string, length: number, min = 0, ma
 export function getRandomPoints(seed: string, numberOfPoints: number, canvasSize: { width: number, height: number }, offset: { x: number, y: number} = { x:0, y:0 }) {
   // Create an empty array to store the points
   const points = [];
-  const xs = seededRandomNumberList(seed+'x', numberOfPoints, 0, canvasSize.width + offset.x)
-  const ys = seededRandomNumberList(seed+'y', numberOfPoints, 0, canvasSize.height + offset.y)
+  const xs = seededRandomNumberList(seed+'x', numberOfPoints, 0 + offset.x, canvasSize.width + offset.x)
+  const ys = seededRandomNumberList(seed+'y', numberOfPoints, 0 + offset.y, canvasSize.height + offset.y)
 
   for (let i = 0; i < numberOfPoints; i++) {
       const x = xs[i];
@@ -162,7 +162,7 @@ export function shortestPath(start: number, end: number, map: number[][], nodes?
 
   }
 
-  console.log("Steps taken:", i);
+  //console.log("Steps taken:", i);
 
   const path: Array<number> = [];
 
@@ -171,7 +171,7 @@ export function shortestPath(start: number, end: number, map: number[][], nodes?
     currentNode = previous[currentNode];
   }
 
-  console.log("Total Distance", distances[end]);
+  //console.log("Total Distance", distances[end]);
 
   return path.reverse();
 }
