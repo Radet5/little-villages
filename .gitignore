@@ -8,7 +8,7 @@ pnpm-debug.log*
 lerna-debug.log*
 
 # Art assets
-src/assets/sprites
+src/assets/art
 
 node_modules
 dist
