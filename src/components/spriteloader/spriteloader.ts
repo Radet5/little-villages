@@ -1,6 +1,6 @@
 import * as PIXI from 'pixi.js';
 import { AnimatedSprite, Spritesheet } from 'pixi.js';
-import womanSpriteSheet from '../../art/assets/sprites/4 Woman/woman_spritesheet.png';
+import womanSpriteSheet from '../../assets/art/sprites/4 Woman/woman_spritesheet.png';
 
 export interface VillagerAnimationSet {
     walk: AnimatedSprite;
