@@ -1,10 +1,12 @@
 import * as PIXI from 'pixi.js';
-import type { VecPair } from '@thi.ng/vectors/api'
-import { dist, direction, Vec2 } from "@thi.ng/vectors";
+import type { VecPair, Vec } from '@thi.ng/vectors/api'
+import * as VECTORS from "@thi.ng/vectors";
+import * as GEOM from '@thi.ng/geom';
 import { DVMesh } from "@thi.ng/geom-voronoi";
 import { getRandomPoints, getUniqueEdges, getUniqueNodes, areThesePointsEquivalent, shortestPath } from './utils';
 import { SpriteLoader } from './components/spriteloader/spriteloader';
 import { Villager } from './components/actors/villager/villager';
+import { OMBBFinder } from './components/ombb-finder/ombb-finder';
 
 // Create the application helper and add its render target to the page
 const population = 100;
@@ -80,7 +82,7 @@ const villageMap: Array<Array<number>> = streetCorners.map((fromCorner) => {
       return false;
     });
     if (connection) {
-      return dist(fromCorner, toCorner);
+      return VECTORS.dist(fromCorner, toCorner);
     }
     return -1;
   });
@@ -108,6 +110,40 @@ streets.forEach((street) => {
   graphics.lineTo(nodeB[0], nodeB[1]);
 });
 
+const ombbFinder = new OMBBFinder();
+
+mesh.voronoi(bounds).forEach((cell, i) => {
+  const shape = new GEOM.Polygon(cell);
+  const ombb = ombbFinder.calcOMBB(cell);
+
+  graphics.lineStyle(2, 0xaaaaaa, 0.55);
+  if (ombb) {
+    console.log(ombb);
+    let ombbRawPoints: Array<number> = [];
+    ombb.forEach(point => {
+      ombbRawPoints.push(point[0]);
+      ombbRawPoints.push(point[1]);
+    });
+    graphics.drawPolygon(ombbRawPoints);
+
+    if (VECTORS.dist(ombb[0], ombb[1]) > VECTORS.dist(ombb[1], ombb[2])) {//wide
+      graphics.lineStyle(2, 0xaaffaa, 1);
+      const pointA = VECTORS.divN(null, VECTORS.add2(null, ombb[0], ombb[1]), 2);
+      const pointB = VECTORS.divN(null, VECTORS.add2(null, ombb[3], ombb[2]), 2);
+      graphics.moveTo(pointA[0], pointA[1]);
+      graphics.lineTo(pointB[0], pointB[1]);
+    } else {//tall
+      graphics.lineStyle(2, 0xffaaaa, 1);
+      const pointA = VECTORS.divN(null, VECTORS.add2(null, ombb[0], ombb[3]), 2);
+      const pointB = VECTORS.divN(null, VECTORS.add2(null, ombb[1], ombb[2]), 2);
+      graphics.moveTo(pointA[0], pointA[1]);
+      graphics.lineTo(pointB[0], pointB[1]);
+    }
+  }
+
+
+});
+
 graphics.lineStyle(2, 0x99431f);
 mesh.edges(true).forEach((edge) => {
   graphics.moveTo(edge[0][0], edge[0][1]);
@@ -127,7 +163,7 @@ streetCorners.forEach((point, i) => {
   basicText.x = point[0];
   basicText.y = point[1] + 10;
 
-  text.addChild(basicText);
+  //text.addChild(basicText);
 });
 
 //Add the graphics to the stage
