@@ -51,7 +51,7 @@ export class MapZone implements MapZoneInterface {
   set intersections(intersections) {this._intersections = intersections}
   set connectionMatrix(connectionMatrix) {this._connectionMatrix = connectionMatrix}
 
-  public calcStreets(bounds?: Array<Array<number>>) {
+  public calcStreets(bounds?: Array<Vec>) {
     const uniqueEdges = getUniqueEdges(this.edges);
     if (bounds) {
         this._streets = uniqueEdges.filter(edge => this.filterOutBoundaryEdges(edge, bounds))
@@ -83,7 +83,7 @@ export class MapZone implements MapZoneInterface {
     });
   }
 
-  protected filterOutBoundaryEdges(edge: Array<Vec>, bounds: Array<Array<number>>) {
+  protected filterOutBoundaryEdges(edge: Array<Vec>, bounds: Array<Vec>) {
     const nodeA = edge[0];
     const nodeB = edge[1];
     const xMin = bounds[0][0];

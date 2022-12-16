@@ -28,17 +28,17 @@ export class Villager {
   private sprites: Container;
   private targetIndex:number = 0;
   private path: Array<number> | null = null;
-  private streetCorners;
-  private villageMap;
+  private _streetCorners;
+  private _villageMap;
 
   private age: Age;
   private genderPresentation: GenderPresentation;
 
   constructor(spriteLoader: SpriteLoader, streetCorners: Array<Vec>, villageMap: Array<Array<number>>) {
-    this.streetCorners = streetCorners;
-    this.villageMap = villageMap;
+    this._streetCorners = streetCorners;
+    this._villageMap = villageMap;
 
-    this.currentNodeIndex = Math.trunc(Math.random() * this.streetCorners.length);
+    this.currentNodeIndex = Math.trunc(Math.random() * this._streetCorners.length);
     this.position = new Vec2([streetCorners[this.currentNodeIndex][0], streetCorners[this.currentNodeIndex][1]]);
 
     this.spriteLoader = spriteLoader;
@@ -55,8 +55,33 @@ export class Villager {
     this.initSprite();
   }
 
+  get streetCorners() {return this._streetCorners;}
+  get villageMap() {return this._villageMap;}
+  set streetCorners(streetCorners) {
+    this._streetCorners = streetCorners;
+    this.currentNodeIndex = this.findClosestNode();
+    this.position = new Vec2([streetCorners[this.currentNodeIndex][0], streetCorners[this.currentNodeIndex][1]]);
+    this.sprites.position = this.position;
+    this.targetIndex = 0
+    this.path = null;
+  }
+  set villageMap(villageMap) {this._villageMap = villageMap;}
+
   public getSprites() {
     return this.sprites;
+  }
+
+  private findClosestNode() {
+    let bestDistance = Infinity;
+    let closestNodeIndex = -1;
+    this.streetCorners.forEach((node, i) => {
+      const distance = dist(this.position, node);
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        closestNodeIndex = i;
+      }
+    });
+    return closestNodeIndex;
   }
 
   private initSprite() {
@@ -155,6 +180,7 @@ export class Villager {
 
     if (distanceToTarget < 1) {
       if (this.targetIndex < this.path.length - 1) {
+        this.currentNodeIndex = this.path[this.targetIndex];
         this.targetIndex++;
       }
       else {

@@ -189,7 +189,16 @@ export function vecArrayToRawData(array: Array<Vec>) {
 export function distanceFromLineToPoint(line: Array<Vec>, point: Vec) {
   const [x1, y1] = line[0];
   const [x2, y2] = line[1];
-  const [x3, y3] = point;
+  let x3 = 0;
+  let y3 = 0;
+  try {
+    [x3, y3] = point;
+  } catch {
+    console.log(point)
+    if (!point) {
+      throw ("Missing Point for distance calculation")
+    }
+  }
   const numerator = Math.abs((y2 - y1) * x3 - (x2 - x1) * y3 + x2 * y1 - y2 * x1);
   const denominator = Math.sqrt((y2 - y1) ** 2 + (x2 - x1) ** 2);
   return numerator / denominator;

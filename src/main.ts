@@ -1,20 +1,12 @@
 import * as PIXI from 'pixi.js';
-import type { VecPair, Vec } from '@thi.ng/vectors/api'
-import * as VECTORS from "@thi.ng/vectors";
-import { DVMesh } from "@thi.ng/geom-voronoi";
-import { v4 as uuidv4 } from 'uuid';
 import {
   getRandomPoints,
-  getUniqueEdges,
-  getUniqueNodes,
-  areThesePointsEquivalent,
   vecArrayToRawData,
-  seededRandomNumberList,
 } from './utils';
 import { SpriteLoader } from './components/spriteloader/spriteloader';
 import { Villager } from './components/actors/villager/villager';
-import { Ward } from './components/mapZone/ward';
 import { Village } from './components/mapZone/village';
+import { MapRenderer } from './components/map-renderer/map-renderer';
 
 // Create the application helper and add its render target to the page
 const seed = "bongo";
@@ -37,38 +29,10 @@ let app = new PIXI.Application( {
 document.body.appendChild(app.view as HTMLCanvasElement);
 
 // Generate a list of random points
-const voronoiPoints = getRandomPoints(seed, 40, villageDimensions, { x: xOff, y: yOff });
+const voronoiPoints = getRandomPoints(seed, 2, villageDimensions, { x: xOff, y: yOff });
 
 // Generate the voronoi diagram
-const mesh = new DVMesh(voronoiPoints);
-const village = new Village("Evansville", "0", mesh, bounds);
-
-let wards: Array<Ward> = [];
-
-const wardNames = [[  "Amber",  "Green",  "Red",  "Yellow",  "Blue",  "White",  "Black",  "Gold",  "Silver",  "Bronze",  "Copper",  "Iron",  "Steel",  "Pearl",  "Emerald",  "Sapphire",  "Ruby", "Aldgate",  "Algate",  "Bassishaw",  "Bishopsgate",  "Bread",  "Broad",  "Cheap",  "Coleman",  "Cordwainer",  "Corn",  "Cripplegate",  "Farringdon",  "Fenchurch",  "Fetter",  "Gresham",  "Gropecunt",  "Lamb",  "Langbourn",  "Lime",  "Ludgate",  "Maiden",  "Newgate",  "Noble",  "Poultry",  "Tower",  "Vintry",  "Walbrook"],[  "Arcadia",  "Ashton",  "Baldwin",  "Belle",  "Briar",  "Brighton",  "Cedar",  "Coral",  "Ember",  "Finch",  "Garden",  "Harvest",  "Hazel",  "Heather",  "Holly"],[  "Meadow",  "Moor",  "Field",  "Glade",  "Grove",  "Wood",  "Ridge",  "Dell",  "Cove",  "Mountain",  "Falls",  "Spring",  "Stream",  "Lake",  "Forest",  "Valley"]]
-
-mesh.voronoi(bounds).forEach((cell, i) => {
-  let name ="";
-  wardNames.forEach((list, j) => {
-    name += list[seededRandomNumberList(seed+"village0ward"+i+"word"+j, 1, 0, list.length-1)[0]];
-    if (j < wardNames.length-1 && j != 0) name += " ";
-  })
-
-  const newWard = new Ward(
-    name,
-    uuidv4(),
-    cell
-  );
-  
-  wards.push(newWard);
-});
-
-wards.forEach((ward) => {
-  ward.calcStreets(bounds);
-  ward.buildConnectionMatrix();
-});
-console.log(wards);
-
+const village = new Village(seed, "Evansville", "0", voronoiPoints, bounds);
 
 const streetCornersLookup: { [xLookup: number]: { [yLookup: number]: number}} = {};
 village.intersections.forEach((corner, i) => {
@@ -83,59 +47,19 @@ const graphics = new PIXI.Graphics();
 //  graphics.drawCircle(point[0], point[1], 2);
 //});
 
-graphics.lineStyle(3, 0x777777);
-graphics.drawRoundedRect(bounds[0][0], bounds[0][1], villageDimensions.width, villageDimensions.height, 40);
+const cityDrawing = new PIXI.Container();
+cityDrawing.interactive = true;
 
-// Draw the ward streets
-graphics.lineStyle(1, 0x303742, 0.2);
-wards.forEach(ward => ward.streets.forEach((street) => {
-  const nodeA = street[0];
-  const nodeB = street[1];
-  graphics.moveTo(nodeA[0], nodeA[1]);
-  graphics.lineTo(nodeB[0], nodeB[1]);
-}));
-// Draw the main streets
-graphics.lineStyle(8, 0x303742);
-village.streets.forEach((street) => {
-  const nodeA = street[0];
-  const nodeB = street[1];
-  graphics.moveTo(nodeA[0], nodeA[1]);
-  graphics.lineTo(nodeB[0], nodeB[1]);
-});
+cityDrawing.on('pointerdown', onClick);
 
-graphics.lineStyle(2, 0x303742);
-mesh.edges(true).forEach((edge) => {
-  graphics.moveTo(edge[0][0], edge[0][1]);
-  graphics.lineTo(edge[1][0], edge[1][1]);
-  //console.log(edge);
-});
+const mapRenderer = new MapRenderer();
 
+mapRenderer.drawVillage(graphics, village, bounds, villageDimensions);
+let text = mapRenderer.renderWardNames(village);
 
-const text = new PIXI.Container;
-village.intersections.forEach((point, i) => {
-  graphics.lineStyle(1, 0x384252);
-  graphics.beginFill(0x21262e);
-  graphics.drawCircle(point[0], point[1], 8);
-  graphics.endFill();
-
-  const basicText = new PIXI.Text(i);
-  basicText.x = point[0];
-  basicText.y = point[1] + 10;
-
-  //text.addChild(basicText);
-});
-
-wards.forEach((ward) => {
-  const tx = new PIXI.Text(ward.name, { fontSize: 9, fontWeight: "800", fill: "0x1a1d24" });
-  tx.x = ward.centroid[0] - (tx.width/2);
-  tx.y = ward.centroid[1] - 15;
-  text.addChild(tx);
-  graphics.lineStyle(1, 0xc000f5);
-  graphics.drawCircle(ward.centroid[0], ward.centroid[1], 1);
-});
-
+cityDrawing.addChild(graphics);
 //Add the graphics to the stage
-app.stage.addChild(graphics);
+app.stage.addChild(cityDrawing);
 app.stage.addChild(text);
 
 const spriteLoader = new SpriteLoader();
@@ -146,6 +70,28 @@ for (let i = 0; i < population; i++) {
   villagers.push(villager);
 
   app.stage.addChild(villager.getSprites());
+}
+
+function onClick(e) {
+  console.log(e);
+  if (app.view.getBoundingClientRect) {
+    const rect = app.view.getBoundingClientRect()
+    const xPos = e.client.x - rect.x;
+    const yPos = e.client.y - rect.y;
+    console.log(xPos, yPos);
+    village.addWard([xPos, yPos]);
+
+    villagers.forEach(villager => {
+      villager.streetCorners = village.intersections;
+      villager.villageMap = village.connectionMatrix;
+    })
+  }
+  graphics.clear();
+  mapRenderer.drawVillage(graphics, village, bounds, villageDimensions);
+  text.children.forEach((child) => child.destroy());
+  text.removeChildren();
+  text = mapRenderer.renderWardNames(village);
+  app.stage.addChild(text);
 }
 
 

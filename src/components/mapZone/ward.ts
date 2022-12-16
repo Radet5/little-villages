@@ -8,14 +8,16 @@ import { MapZone } from "./mapzone";
 
 export class Ward extends MapZone {
   private ombbFinder: OMBBFinder;
-  constructor(name: string, id: string, points: Array<Vec>) {
+  private _maxSubdivArea;
+  constructor(name: string, id: string, points: Array<Vec>, maxSubDivArea: number) {
     super(name, id);
     this.ombbFinder = new OMBBFinder();
+    this._maxSubdivArea = maxSubDivArea;
 
     this.boundaries = points;
 
     const shape = new GEOM.Polygon(points);
-    const {subDivisions, bisectingLines} = this.recursiveSubDiv(shape);
+    const {subDivisions, bisectingLines} = this.recursiveSubDiv(shape, this._maxSubdivArea);
     this.calcEdges(subDivisions);
     this._intersections = getUniqueNodes(this.edges);
   }
@@ -42,15 +44,14 @@ export class Ward extends MapZone {
     this._edges = wardEdges;
   }
 
-  private recursiveSubDiv(shape: GEOM.Polygon): {subDivisions: Array<Array<Vec>>, bisectingLines: Array<Array<Vec>>} {
+  private recursiveSubDiv(shape: GEOM.Polygon, maxSubDivArea: number): {subDivisions: Array<Array<Vec>>, bisectingLines: Array<Array<Vec>>} {
     const {subDivisions, bisectingLine} = this.subDivide(shape);
-
     let subDivisionsA: Array<Array<Vec>> = [];
     let bisectionsA: Array<Array<VECTORS.ReadonlyVec>> = [];
     const shapeA = new GEOM.Polygon(subDivisions[0]);
     const sizeA = GEOM.area(shapeA);
-    if (sizeA > 3000) {
-      const results = this.recursiveSubDiv(shapeA);
+    if (sizeA > maxSubDivArea) {
+      const results = this.recursiveSubDiv(shapeA, maxSubDivArea);
       subDivisionsA = results.subDivisions;
       bisectionsA = results.bisectingLines;
     }
@@ -58,8 +59,8 @@ export class Ward extends MapZone {
     let bisectionsB: Array<Array<VECTORS.ReadonlyVec>> = [];
     const shapeB = new GEOM.Polygon(subDivisions[1]);
     const sizeB = GEOM.area(shapeB);
-    if (sizeB > 3000) {
-      const results = this.recursiveSubDiv(shapeB);
+    if (sizeB > maxSubDivArea) {
+      const results = this.recursiveSubDiv(shapeB, maxSubDivArea);
       subDivisionsB = results.subDivisions;
       bisectionsB = results.bisectingLines;
     }
@@ -92,7 +93,13 @@ export class Ward extends MapZone {
 
   private subDivide(shape: GEOM.Polygon) {
     const line = this.findBisectingLine(shape);
-    const clippedLine = sutherlandHodgeman(line.points, shape.points);
+    let clippedLine = sutherlandHodgeman(line.points, shape.points);
+    if (!clippedLine[0]) {
+        console.log("line", line)
+        console.log("clipshape", shape)
+        console.log("cl", clippedLine)
+        throw("clipping bisection line to shape failed");
+    }
 
     let subDivisions: Array<Array<Vec>> = [[], []];
     let subDivIndices: Array<number> = [];
@@ -132,6 +139,7 @@ export class Ward extends MapZone {
       if (i == shape.points.length) i = 0;
       if (i > 20) {
         console.error(end, i);
+        throw("Cannot subdivide")
         break;
       }
     }
