@@ -46,7 +46,7 @@ export class MapRenderer {
       //console.log(edge);
     });
   
-    village.intersections.forEach((point, i) => {
+    village.intersections.forEach((point) => {
       graphics.lineStyle(1, 0x384252);
       graphics.beginFill(0x21262e);
       graphics.drawCircle(point[0], point[1], 8);

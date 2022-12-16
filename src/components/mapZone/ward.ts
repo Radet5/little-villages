@@ -17,7 +17,7 @@ export class Ward extends MapZone {
     this.boundaries = points;
 
     const shape = new GEOM.Polygon(points);
-    const {subDivisions, bisectingLines} = this.recursiveSubDiv(shape, this._maxSubdivArea);
+    const {subDivisions} = this.recursiveSubDiv(shape, this._maxSubdivArea);
     this.calcEdges(subDivisions);
     this._intersections = getUniqueNodes(this.edges);
   }

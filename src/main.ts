@@ -1,7 +1,6 @@
 import * as PIXI from 'pixi.js';
 import {
   getRandomPoints,
-  vecArrayToRawData,
 } from './utils';
 import { SpriteLoader } from './components/spriteloader/spriteloader';
 import { Villager } from './components/actors/villager/villager';
@@ -72,7 +71,7 @@ for (let i = 0; i < population; i++) {
   app.stage.addChild(villager.getSprites());
 }
 
-function onClick(e) {
+function onClick(e: PIXI.FederatedPointerEvent) {
   console.log(e);
   if (app.view.getBoundingClientRect) {
     const rect = app.view.getBoundingClientRect()
