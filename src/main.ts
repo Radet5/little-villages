@@ -1,15 +1,24 @@
 import * as PIXI from 'pixi.js';
 import type { VecPair, Vec } from '@thi.ng/vectors/api'
 import * as VECTORS from "@thi.ng/vectors";
-import * as GEOM from '@thi.ng/geom';
 import { DVMesh } from "@thi.ng/geom-voronoi";
-import { getRandomPoints, getUniqueEdges, getUniqueNodes, areThesePointsEquivalent, shortestPath } from './utils';
+import { v4 as uuidv4 } from 'uuid';
+import {
+  getRandomPoints,
+  getUniqueEdges,
+  getUniqueNodes,
+  areThesePointsEquivalent,
+  vecArrayToRawData,
+  seededRandomNumberList,
+} from './utils';
 import { SpriteLoader } from './components/spriteloader/spriteloader';
 import { Villager } from './components/actors/villager/villager';
-import { OMBBFinder } from './components/ombb-finder/ombb-finder';
+import { Ward } from './components/mapZone/ward';
+import { Village } from './components/mapZone/village';
 
 // Create the application helper and add its render target to the page
-const population = 100;
+const seed = "bongo";
+const population = 29;
 const villageDimensions = { width: 1000, height: 820 };
 const resolution = { width: 1380, height: 920 };
 const xOff = 200;
@@ -22,73 +31,49 @@ const bounds = [
 ]
 let app = new PIXI.Application( {
   ...resolution,
-  backgroundColor: 0x1099bc,
+  backgroundColor: 0x785534,
   antialias: true,
 });
 document.body.appendChild(app.view as HTMLCanvasElement);
 
 // Generate a list of random points
-const voronoiPoints = getRandomPoints("bongo", 40, villageDimensions, { x: xOff, y: yOff });
+const voronoiPoints = getRandomPoints(seed, 40, villageDimensions, { x: xOff, y: yOff });
 
 // Generate the voronoi diagram
 const mesh = new DVMesh(voronoiPoints);
-const edges =  mesh.edges(true, [bounds[0], bounds[2]]).map((edge) => {
-  return [
-    [
-      Math.trunc(edge[0][0]),
-      Math.trunc(edge[0][1])
-    ], [
-      Math.trunc(edge[1][0]),
-      Math.trunc(edge[1][1])
-    ]
-  ] as VecPair;
+const village = new Village("Evansville", "0", mesh, bounds);
+
+let wards: Array<Ward> = [];
+
+const wardNames = [[  "Amber",  "Green",  "Red",  "Yellow",  "Blue",  "White",  "Black",  "Gold",  "Silver",  "Bronze",  "Copper",  "Iron",  "Steel",  "Pearl",  "Emerald",  "Sapphire",  "Ruby", "Aldgate",  "Algate",  "Bassishaw",  "Bishopsgate",  "Bread",  "Broad",  "Cheap",  "Coleman",  "Cordwainer",  "Corn",  "Cripplegate",  "Farringdon",  "Fenchurch",  "Fetter",  "Gresham",  "Gropecunt",  "Lamb",  "Langbourn",  "Lime",  "Ludgate",  "Maiden",  "Newgate",  "Noble",  "Poultry",  "Tower",  "Vintry",  "Walbrook"],[  "Arcadia",  "Ashton",  "Baldwin",  "Belle",  "Briar",  "Brighton",  "Cedar",  "Coral",  "Ember",  "Finch",  "Garden",  "Harvest",  "Hazel",  "Heather",  "Holly"],[  "Meadow",  "Moor",  "Field",  "Glade",  "Grove",  "Wood",  "Ridge",  "Dell",  "Cove",  "Mountain",  "Falls",  "Spring",  "Stream",  "Lake",  "Forest",  "Valley"]]
+
+mesh.voronoi(bounds).forEach((cell, i) => {
+  let name ="";
+  wardNames.forEach((list, j) => {
+    name += list[seededRandomNumberList(seed+"village0ward"+i+"word"+j, 1, 0, list.length-1)[0]];
+    if (j < wardNames.length-1 && j != 0) name += " ";
+  })
+
+  const newWard = new Ward(
+    name,
+    uuidv4(),
+    cell
+  );
+  
+  wards.push(newWard);
 });
 
-const streets = getUniqueEdges(edges).filter((edge) => {
-  //remove boundary edges
-  const nodeA = edge[0];
-  const nodeB = edge[1];
-  const xMin = bounds[0][0];
-  const yMin = bounds[0][1];
-  const xMax = bounds[2][0];
-  const yMax = bounds[2][1];
-  if (nodeA[0] == nodeB[0] && (nodeA[0] == xMin || nodeA[0] == xMax)) return false;
-  if (nodeA[1] == nodeB[1] && (nodeA[1] == yMin || nodeA[1] == yMax)) return false;
-  return true;
+wards.forEach((ward) => {
+  ward.calcStreets(bounds);
+  ward.buildConnectionMatrix();
 });
-const streetCorners = getUniqueNodes(streets);
+console.log(wards);
 
-console.log("Number of Streets:", streets.length);
-//console.log("Streets:", streets);
-console.log("number street corners", streetCorners.length);
 
 const streetCornersLookup: { [xLookup: number]: { [yLookup: number]: number}} = {};
-streetCorners.forEach((corner, i) => {
+village.intersections.forEach((corner, i) => {
   streetCornersLookup[corner[0]] = { [corner[1]]: i };
 });
-
-const villageMap: Array<Array<number>> = streetCorners.map((fromCorner) => {
-  return streetCorners.map(toCorner => {
-    const connection = streets.find((street) => {
-      if(areThesePointsEquivalent(street[0], fromCorner)) {
-        if(areThesePointsEquivalent(street[1], toCorner)) {
-          return true;
-        }
-      } else if(areThesePointsEquivalent(street[1], fromCorner)) {
-        if(areThesePointsEquivalent(street[0], toCorner)) {
-          return true
-        }
-      }
-      return false;
-    });
-    if (connection) {
-      return VECTORS.dist(fromCorner, toCorner);
-    }
-    return -1;
-  });
-});
-
-console.log("bigolMap size", villageMap.length);
 
 // Create a PIXI.Graphics object to draw the voronoi diagram
 const graphics = new PIXI.Graphics();
@@ -101,50 +86,24 @@ const graphics = new PIXI.Graphics();
 graphics.lineStyle(3, 0x777777);
 graphics.drawRoundedRect(bounds[0][0], bounds[0][1], villageDimensions.width, villageDimensions.height, 40);
 
-// Draw the streets
-graphics.lineStyle(8, 0x99431f);
-streets.forEach((street) => {
+// Draw the ward streets
+graphics.lineStyle(1, 0x303742, 0.2);
+wards.forEach(ward => ward.streets.forEach((street) => {
+  const nodeA = street[0];
+  const nodeB = street[1];
+  graphics.moveTo(nodeA[0], nodeA[1]);
+  graphics.lineTo(nodeB[0], nodeB[1]);
+}));
+// Draw the main streets
+graphics.lineStyle(8, 0x303742);
+village.streets.forEach((street) => {
   const nodeA = street[0];
   const nodeB = street[1];
   graphics.moveTo(nodeA[0], nodeA[1]);
   graphics.lineTo(nodeB[0], nodeB[1]);
 });
 
-const ombbFinder = new OMBBFinder();
-
-mesh.voronoi(bounds).forEach((cell, i) => {
-  const shape = new GEOM.Polygon(cell);
-  const ombb = ombbFinder.calcOMBB(cell);
-
-  graphics.lineStyle(2, 0xaaaaaa, 0.55);
-  if (ombb) {
-    console.log(ombb);
-    let ombbRawPoints: Array<number> = [];
-    ombb.forEach(point => {
-      ombbRawPoints.push(point[0]);
-      ombbRawPoints.push(point[1]);
-    });
-    graphics.drawPolygon(ombbRawPoints);
-
-    if (VECTORS.dist(ombb[0], ombb[1]) > VECTORS.dist(ombb[1], ombb[2])) {//wide
-      graphics.lineStyle(2, 0xaaffaa, 1);
-      const pointA = VECTORS.divN(null, VECTORS.add2(null, ombb[0], ombb[1]), 2);
-      const pointB = VECTORS.divN(null, VECTORS.add2(null, ombb[3], ombb[2]), 2);
-      graphics.moveTo(pointA[0], pointA[1]);
-      graphics.lineTo(pointB[0], pointB[1]);
-    } else {//tall
-      graphics.lineStyle(2, 0xffaaaa, 1);
-      const pointA = VECTORS.divN(null, VECTORS.add2(null, ombb[0], ombb[3]), 2);
-      const pointB = VECTORS.divN(null, VECTORS.add2(null, ombb[1], ombb[2]), 2);
-      graphics.moveTo(pointA[0], pointA[1]);
-      graphics.lineTo(pointB[0], pointB[1]);
-    }
-  }
-
-
-});
-
-graphics.lineStyle(2, 0x99431f);
+graphics.lineStyle(2, 0x303742);
 mesh.edges(true).forEach((edge) => {
   graphics.moveTo(edge[0][0], edge[0][1]);
   graphics.lineTo(edge[1][0], edge[1][1]);
@@ -153,9 +112,9 @@ mesh.edges(true).forEach((edge) => {
 
 
 const text = new PIXI.Container;
-streetCorners.forEach((point, i) => {
-  graphics.lineStyle(1, 0xcc5a2a);
-  graphics.beginFill(0x99431f);
+village.intersections.forEach((point, i) => {
+  graphics.lineStyle(1, 0x384252);
+  graphics.beginFill(0x21262e);
   graphics.drawCircle(point[0], point[1], 8);
   graphics.endFill();
 
@@ -166,6 +125,15 @@ streetCorners.forEach((point, i) => {
   //text.addChild(basicText);
 });
 
+wards.forEach((ward) => {
+  const tx = new PIXI.Text(ward.name, { fontSize: 9, fontWeight: "800", fill: "0x1a1d24" });
+  tx.x = ward.centroid[0] - (tx.width/2);
+  tx.y = ward.centroid[1] - 15;
+  text.addChild(tx);
+  graphics.lineStyle(1, 0xc000f5);
+  graphics.drawCircle(ward.centroid[0], ward.centroid[1], 1);
+});
+
 //Add the graphics to the stage
 app.stage.addChild(graphics);
 app.stage.addChild(text);
@@ -174,7 +142,7 @@ const spriteLoader = new SpriteLoader();
 await spriteLoader.loadSpriteSheet();
 const villagers: Array<Villager> = [];
 for (let i = 0; i < population; i++) {
-  const villager = new Villager(spriteLoader, streetCorners, villageMap);
+  const villager = new Villager(spriteLoader, village.intersections, village.connectionMatrix);
   villagers.push(villager);
 
   app.stage.addChild(villager.getSprites());
