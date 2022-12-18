@@ -155,9 +155,6 @@ export class Villager {
     const startIndex = this.location.nodeIndex;
     if (this.destination.type == LocationType.none) {
 
-      //const endIndex = Math.trunc(Math.random() * this.village.intersections.length);
-      let endIndex = 0;
-
       //Test stuff for finding way to an specific lot:
       const ward = this.village.getRandomWard();
       let lotNumber;
@@ -272,8 +269,8 @@ export class Villager {
         this.animations.idle.visible = true;
         this.animations.walk.visible = false;
         const number = Math.random();
-        //if (number > 0.999) this.pickDestination();
-        this.pickDestination();
+        if (number > 0.999) this.pickDestination();
+        //this.pickDestination();
     } else {
         this.animations.walk.visible = true;
         this.animations.idle.visible = false;
