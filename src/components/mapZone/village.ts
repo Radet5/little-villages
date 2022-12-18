@@ -1,8 +1,7 @@
 import type { Vec, VecPair } from '@thi.ng/vectors/api'
-import * as VECTORS from '@thi.ng/vectors';
 import { v4 as uuidv4 } from 'uuid';
 import { DVMesh } from '@thi.ng/geom-voronoi';
-import { distanceFromLineToPoint, getUniqueNodes, seededRandomNumberList } from '../../utils';
+import { getUniqueNodes, seededRandomNumberList } from '../../utils';
 import { MapZone, LocationType } from "./mapzone";
 import { Ward } from './ward';
 
