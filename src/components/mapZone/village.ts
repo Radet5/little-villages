@@ -2,7 +2,7 @@ import type { VecPair, Vec } from '@thi.ng/vectors/api'
 import { v4 as uuidv4 } from 'uuid';
 import { DVMesh } from '@thi.ng/geom-voronoi';
 import { getUniqueNodes, seededRandomNumberList } from '../../utils';
-import { MapZone } from "./mapzone";
+import { MapZone, LocationType } from "./mapzone";
 import { Ward } from './ward';
 
 const wardNames = [[  "Amber",  "Green",  "Red",  "Yellow",  "Blue",  "White",  "Black",  "Gold",  "Silver",  "Bronze",  "Copper",  "Iron",  "Steel",  "Pearl",  "Emerald",  "Sapphire",  "Ruby", "Aldgate",  "Algate",  "Bassishaw",  "Bishopsgate",  "Bread",  "Broad",  "Cheap",  "Coleman",  "Cordwainer",  "Corn",  "Cripplegate",  "Farringdon",  "Fenchurch",  "Fetter",  "Gresham",  "Gropecunt",  "Lamb",  "Langbourn",  "Lime",  "Ludgate",  "Maiden",  "Newgate",  "Noble",  "Poultry",  "Tower",  "Vintry",  "Walbrook"],[  "Arcadia",  "Ashton",  "Baldwin",  "Belle",  "Briar",  "Brighton",  "Cedar",  "Coral",  "Ember",  "Finch",  "Garden",  "Harvest",  "Hazel",  "Heather",  "Holly"],[  "Meadow",  "Moor",  "Field",  "Glade",  "Grove",  "Wood",  "Ridge",  "Dell",  "Cove",  "Mountain",  "Falls",  "Spring",  "Stream",  "Lake",  "Forest",  "Valley"]]
@@ -10,9 +10,10 @@ const wardNames = [[  "Amber",  "Green",  "Red",  "Yellow",  "Blue",  "White",  
 export class Village extends MapZone {
   private _mesh: DVMesh<number>;
   private _wards: Array<Ward> = [];
+  protected _intersectionLookup: { [xLookup: number]: { [yLookup: number]: number}} = {}
   protected _seed;
   constructor(seed: string, name: string, id: string, points: Array<Array<number>>, bounds: Array<Array<number>>) {
-      super(name, id);
+      super(name, id, LocationType.village);
       this._seed = seed;
       this.boundaries = bounds;
       this._mesh = new DVMesh(points);
@@ -22,16 +23,22 @@ export class Village extends MapZone {
   get mesh() {return this._mesh}
   get seed() {return this._seed;}
   get wards() {return this._wards;}
+  get intersectionLookup() {return this._intersectionLookup;}
 
   addWard(point: Array<number>) {
     this._mesh.add(point);
     this.buildVillage();
   }
 
+  getWardById(id: string) {return this.wards.find(ward => ward.id == id);}
+  getRandomWardId() {return this.wards[Math.trunc(Math.random()*(this.wards.length-1))].id;}
+  getRandomWard() {return this.getWardById(this.getRandomWardId());}
+
   private buildVillage() {
       this.calcEdges(this.mesh, this.boundaries);
       this.calcStreets(this.boundaries);
       this._intersections = getUniqueNodes(this.edges);
+      this.initIntersectionLookup();
       this.buildConnectionMatrix();
 
       console.log("Number of Streets:", this.streets.length);

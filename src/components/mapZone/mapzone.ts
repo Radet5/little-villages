@@ -3,7 +3,13 @@ import * as VECTORS from '@thi.ng/vectors';
 import * as GEOM from '@thi.ng/geom';
 import { getUniqueEdges, areThesePointsEquivalent } from '../../utils';
 
-interface MapZoneInterface {
+export enum LocationType {
+  none,
+  lot,
+  ward,
+  village,
+}
+export interface MapZoneInterface {
   name: string,
   id: string,
   boundaries: Array<Vec>,
@@ -12,6 +18,8 @@ interface MapZoneInterface {
   streets: Array<Array<Vec>>,
   intersections: Array<Vec>,
   connectionMatrix: Array<Array<number>>,
+  intersectionLookup: { [xLookup: number]: { [yLookup: number]: number}};
+  locationType: LocationType;
 }
 export class MapZone implements MapZoneInterface {
   protected _name: string;
@@ -21,15 +29,19 @@ export class MapZone implements MapZoneInterface {
   protected _streets: Array<Array<Vec>> = [];
   protected _intersections: Array<Vec> = [];
   protected _connectionMatrix: Array<Array<number>> = [];
+  protected _intersectionLookup: { [xLookup: number]: { [yLookup: number]: number}} = {}
+  private _locationType: LocationType;
 
-  constructor( name: string, id: string ) {
+  constructor( name: string, id: string, locationType: LocationType ) {
     this._name = name;
     this._id = id;
+    this._locationType = locationType;
   }
 
   get name() {return this._name;}
   get id() {return this._id;}
   get boundaries() {return this._boundaries;}
+  get locationType() {return this._locationType;}
 
   get centroid() {
     let centroid: Vec = [];
@@ -44,12 +56,27 @@ export class MapZone implements MapZoneInterface {
   get streets() {return this._streets;}
   get intersections() {return this._intersections;}
   get connectionMatrix() {return this._connectionMatrix;}
+  get intersectionLookup() {return this._intersectionLookup;}
 
   set name(name) {this._name = name}
   set id(id) {this._id = id}
   set boundaries(boundaries) {this._boundaries = boundaries.map(point => [Math.trunc(point[0]), Math.trunc(point[1])])}
   set intersections(intersections) {this._intersections = intersections}
   set connectionMatrix(connectionMatrix) {this._connectionMatrix = connectionMatrix}
+
+
+  getIntersectionPositionByIndex(index: number) {
+    const intersection = this._intersections[index];
+    return new VECTORS.Vec2([intersection[0], intersection[1]]);
+  }
+
+  protected initIntersectionLookup() {
+      this.intersections.forEach((corner, i) => {
+        if (!this.intersectionLookup[corner[0]]) this.intersectionLookup[corner[0]] = {};
+        const xMap = this.intersectionLookup[corner[0]];
+        xMap[corner[1]] = i;
+      });
+  };
 
   public calcStreets(bounds?: Array<Vec>) {
     const uniqueEdges = getUniqueEdges(this.edges);

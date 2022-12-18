@@ -28,15 +28,10 @@ let app = new PIXI.Application( {
 document.body.appendChild(app.view as HTMLCanvasElement);
 
 // Generate a list of random points
-const voronoiPoints = getRandomPoints(seed, 2, villageDimensions, { x: xOff, y: yOff });
+const voronoiPoints = getRandomPoints(seed, 20, villageDimensions, { x: xOff, y: yOff });
 
 // Generate the voronoi diagram
 const village = new Village(seed, "Evansville", "0", voronoiPoints, bounds);
-
-const streetCornersLookup: { [xLookup: number]: { [yLookup: number]: number}} = {};
-village.intersections.forEach((corner, i) => {
-  streetCornersLookup[corner[0]] = { [corner[1]]: i };
-});
 
 // Create a PIXI.Graphics object to draw the voronoi diagram
 const graphics = new PIXI.Graphics();
@@ -55,6 +50,8 @@ const mapRenderer = new MapRenderer();
 
 mapRenderer.drawVillage(graphics, village, bounds, villageDimensions);
 let text = mapRenderer.renderWardNames(village);
+const numbers = mapRenderer.renderIntersectionNumbers(village);
+text.addChild(numbers);
 
 cityDrawing.addChild(graphics);
 //Add the graphics to the stage
@@ -65,7 +62,7 @@ const spriteLoader = new SpriteLoader();
 await spriteLoader.loadSpriteSheet();
 const villagers: Array<Villager> = [];
 for (let i = 0; i < population; i++) {
-  const villager = new Villager(spriteLoader, village.intersections, village.connectionMatrix);
+  const villager = new Villager(spriteLoader, village);
   villagers.push(villager);
 
   app.stage.addChild(villager.getSprites());
@@ -81,8 +78,7 @@ function onClick(e: PIXI.FederatedPointerEvent) {
     village.addWard([xPos, yPos]);
 
     villagers.forEach(villager => {
-      villager.streetCorners = village.intersections;
-      villager.villageMap = village.connectionMatrix;
+      villager.refreshMapInfo();
     })
   }
   graphics.clear();
@@ -90,6 +86,8 @@ function onClick(e: PIXI.FederatedPointerEvent) {
   text.children.forEach((child) => child.destroy());
   text.removeChildren();
   text = mapRenderer.renderWardNames(village);
+  const numbers = mapRenderer.renderIntersectionNumbers(village);
+  text.addChild(numbers);
   app.stage.addChild(text);
 }
 

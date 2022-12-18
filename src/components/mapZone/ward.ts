@@ -4,23 +4,31 @@ import { sutherlandHodgeman } from '@thi.ng/geom-clip-poly';
 import { distanceFromLineToPoint, getUniqueNodes } from '../../utils';
 import type { VecPair, Vec } from '@thi.ng/vectors/api'
 import { OMBBFinder } from '../ombb-finder/ombb-finder';
-import { MapZone } from "./mapzone";
+import { MapZone, LocationType } from "./mapzone";
 
 export class Ward extends MapZone {
   private ombbFinder: OMBBFinder;
+  private _lots: Array<Array<Vec>>;
   private _maxSubdivArea;
   constructor(name: string, id: string, points: Array<Vec>, maxSubDivArea: number) {
-    super(name, id);
+    super(name, id, LocationType.ward);
     this.ombbFinder = new OMBBFinder();
     this._maxSubdivArea = maxSubDivArea;
 
     this.boundaries = points;
 
     const shape = new GEOM.Polygon(points);
-    const {subDivisions} = this.recursiveSubDiv(shape, this._maxSubdivArea);
-    this.calcEdges(subDivisions);
+    const subDivisions = this.subDivide(shape, this._maxSubdivArea);
+    this._lots = subDivisions.map(sub => sub.map(edge => [Math.trunc(edge[0]), Math.trunc(edge[1])]));
+    this.calcEdges(this.lots);
     this._intersections = getUniqueNodes(this.edges);
+    this.initIntersectionLookup();
   }
+
+  get lots() {return this._lots;}
+
+  getLotCount() {return this._lots.length;}
+  getLot(index: number) {return this.lots[index];}
 
   private calcEdges(subDivisions: Array<Array<Vec>>) {
     const wardEdges: Array<VecPair> = [];
@@ -44,38 +52,6 @@ export class Ward extends MapZone {
     this._edges = wardEdges;
   }
 
-  private recursiveSubDiv(shape: GEOM.Polygon, maxSubDivArea: number): {subDivisions: Array<Array<Vec>>, bisectingLines: Array<Array<Vec>>} {
-    const {subDivisions, bisectingLine} = this.subDivide(shape);
-    let subDivisionsA: Array<Array<Vec>> = [];
-    let bisectionsA: Array<Array<VECTORS.ReadonlyVec>> = [];
-    const shapeA = new GEOM.Polygon(subDivisions[0]);
-    const sizeA = GEOM.area(shapeA);
-    if (sizeA > maxSubDivArea) {
-      const results = this.recursiveSubDiv(shapeA, maxSubDivArea);
-      subDivisionsA = results.subDivisions;
-      bisectionsA = results.bisectingLines;
-    }
-    let subDivisionsB: Array<Array<Vec>> = [];
-    let bisectionsB: Array<Array<VECTORS.ReadonlyVec>> = [];
-    const shapeB = new GEOM.Polygon(subDivisions[1]);
-    const sizeB = GEOM.area(shapeB);
-    if (sizeB > maxSubDivArea) {
-      const results = this.recursiveSubDiv(shapeB, maxSubDivArea);
-      subDivisionsB = results.subDivisions;
-      bisectionsB = results.bisectingLines;
-    }
-
-    return {subDivisions: [
-      ...subDivisions,
-      ...subDivisionsA,
-      ...subDivisionsB
-    ], bisectingLines: [
-      bisectingLine,
-      ...bisectionsA,
-      ...bisectionsB
-    ]}
-  }
-
   private findBisectingLine(shape: GEOM.Polygon) {
     const ombb = this.ombbFinder.calcOMBB(shape.points);
     let pointA: VECTORS.Vec, pointB:VECTORS.Vec;
@@ -91,7 +67,7 @@ export class Ward extends MapZone {
     return new GEOM.Line([pointA, pointB]);
   }
 
-  private subDivide(shape: GEOM.Polygon) {
+  private subDivide(shape: GEOM.Polygon, maxSubDivArea: number) {
     const line = this.findBisectingLine(shape);
     let clippedLine = sutherlandHodgeman(line.points, shape.points);
     if (!clippedLine[0]) {
@@ -101,7 +77,6 @@ export class Ward extends MapZone {
         throw("clipping bisection line to shape failed");
     }
 
-    let subDivisions: Array<Array<Vec>> = [[], []];
     let subDivIndices: Array<number> = [];
     let subDivDistances: Array<number> = [Infinity, Infinity];
     //Find which edges are touching the bisecting line
@@ -125,16 +100,17 @@ export class Ward extends MapZone {
 
     //console.log("splitIndicies", subDivIndices);
 
-    //Find subdiv 0
+    //Find subdiv A
+    let subDivA: Array<Vec> = [];
     let i = subDivIndices[0];
-    subDivisions[0].push(shape.points[i]);
-    subDivisions[0].push(clippedLine[0]);
-    subDivisions[0].push(clippedLine[1]);
+    subDivA.push(shape.points[i]);
+    subDivA.push(clippedLine[0]);
+    subDivA.push(clippedLine[1]);
     i = subDivIndices[1] + 1;
     if (i >= shape.points.length) i = 0;
     let end = subDivIndices[0];
     while (i != end) {
-      subDivisions[0].push(shape.points[i]);
+      subDivA.push(shape.points[i]);
       i++;
       if (i == shape.points.length) i = 0;
       if (i > 20) {
@@ -144,16 +120,26 @@ export class Ward extends MapZone {
       }
     }
 
-    //Find subdiv 1
+    let branchA: Array<Array<Vec>>;
+    const shapeA = new GEOM.Polygon(subDivA);
+    const sizeA = GEOM.area(shapeA);
+    if (sizeA > maxSubDivArea) {
+      branchA = this.subDivide(shapeA, maxSubDivArea);
+    } else {
+        branchA = [subDivA];
+    }
+
+    //Find subdiv B
+    let subDivB: Array<Vec> = [];
     i = subDivIndices[1];
-    subDivisions[1].push(shape.points[i]);
-    subDivisions[1].push(clippedLine[1]);
-    subDivisions[1].push(clippedLine[0]);
+    subDivB.push(shape.points[i]);
+    subDivB.push(clippedLine[1]);
+    subDivB.push(clippedLine[0]);
     i = subDivIndices[0] + 1;
     if (i >= shape.points.length) i = 0;
     end = subDivIndices[1];
     while (i != end) {
-      subDivisions[1].push(shape.points[i]);
+      subDivB.push(shape.points[i]);
       i++;
       if (i == shape.points.length) i = 0;
       if (i > 20) {
@@ -162,6 +148,15 @@ export class Ward extends MapZone {
       }
     }
 
-    return {bisectingLine: [clippedLine[0], clippedLine[1]], subDivisions};
+    let branchB: Array<Array<Vec>>;
+    const shapeB = new GEOM.Polygon(subDivB);
+    const sizeB = GEOM.area(shapeB);
+    if (sizeB > maxSubDivArea) {
+      branchB = this.subDivide(shapeB, maxSubDivArea);
+    } else {
+        branchB = [subDivB];
+    }
+
+    return [...branchA, ...branchB];
   }
 }

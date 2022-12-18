@@ -120,6 +120,7 @@ export function shortestPath(start: number, end: number, map: number[][], nodes?
     vistedNodes.push(currentNode);
     const adjacentNodes: Array<number> = [];
     const currentNodeMap = map[currentNode];
+    if (!currentNodeMap) debugger;
     currentNodeMap.forEach((distance, index) => {
       if(distance > -1) {
         adjacentNodes.push(index);
