@@ -64,7 +64,7 @@ export class Village extends MapZone {
       console.log(maxSubDivArea);
       const newWard = new Ward(
         name,
-        uuidv4(),
+        seededRandomNumberList(this._seed+this.name+"ward"+i, 10).join(""),
         cell,
         maxSubDivArea,
       );

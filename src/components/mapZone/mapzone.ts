@@ -2,6 +2,7 @@ import type { VecPair, Vec } from '@thi.ng/vectors/api'
 import * as VECTORS from '@thi.ng/vectors';
 import * as GEOM from '@thi.ng/geom';
 import { getUniqueEdges, areThesePointsEquivalent } from '../../utils';
+import { Vec2 } from '@thi.ng/vectors';
 
 export enum LocationType {
   none,
@@ -20,6 +21,7 @@ export interface MapZoneInterface {
   connectionMatrix: Array<Array<number>>,
   intersectionLookup: { [xLookup: number]: { [yLookup: number]: number}};
   locationType: LocationType;
+  getIntersectionPositionByIndex: (index: number) => Vec2;
 }
 export class MapZone implements MapZoneInterface {
   protected _name: string;

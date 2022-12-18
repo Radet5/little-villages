@@ -67,8 +67,15 @@ export class Villager {
   }
 
   public refreshMapInfo() {
+    if (this.location.type == LocationType.ward) {
+      const rebuiltWard = this.village.getWardById(this.location.id);
+      if (rebuiltWard) {
+        this.location.object = rebuiltWard;
+      } else console.warn("uhoh can't get rebuilt ward info");
+    }
     this.location.nodeIndex = this.findClosestNode();
-    this.position = this.village.getIntersectionPositionByIndex(this.location.nodeIndex);
+    this.position = this.location.object.getIntersectionPositionByIndex(this.location.nodeIndex);
+    this.destination =  {id: "", type: LocationType.none, index: -1, location: [0,0]};
     this.targetIndex = 0
     this.path = null;
   }
@@ -95,7 +102,7 @@ export class Villager {
   }
 
   private findClosestNode() {
-    return this.findClosestPoint(this.village.intersections)
+    return this.findClosestPoint(this.location.object.intersections)
   }
 
   private initSprite() {
