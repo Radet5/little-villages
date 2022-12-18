@@ -18,6 +18,7 @@
     "@thi.ng/geom": "^4.0.0",
     "@thi.ng/geom-clip-poly": "^2.1.37",
     "@thi.ng/geom-voronoi": "^2.2.38",
+    "@thi.ng/vectors": "^7.5.27",
     "pixi.js": "^7.0.4",
     "uuid": "^9.0.0"
   }

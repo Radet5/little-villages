@@ -185,6 +185,7 @@ export class Villager {
         const entranceNodes = toObject.boundaries.filter((node) => {
           return this.village.intersectionLookup[node[0]] && this.village.intersectionLookup[node[0]][node[1]]
         })
+        //TODO: Use shortest path length rather than shortest direct distance:
         const closestEntranceNode = entranceNodes[this.findClosestPoint(entranceNodes)];
         if (!this.village.intersectionLookup[closestEntranceNode[0]]) debugger;
         const endIndex = this.village.intersectionLookup[closestEntranceNode[0]][closestEntranceNode[1]];

@@ -1,7 +1,7 @@
 import * as GEOM from '@thi.ng/geom';
 import * as VECTORS from '@thi.ng/vectors';
 import { sutherlandHodgeman } from '@thi.ng/geom-clip-poly';
-import { distanceFromLineToPoint, getUniqueNodes } from '../../utils';
+import { distanceFromLineToPoint, getUniqueNodes, getUniqueEdges } from '../../utils';
 import type { VecPair, Vec } from '@thi.ng/vectors/api'
 import { OMBBFinder } from '../ombb-finder/ombb-finder';
 import { MapZone, LocationType } from "./mapzone";
@@ -29,6 +29,80 @@ export class Ward extends MapZone {
 
   getLotCount() {return this._lots.length;}
   getLot(index: number) {return this.lots[index];}
+
+  public calcStreets(bounds?: Array<Vec>) {
+    const uniqueEdges = getUniqueEdges(this.edges);
+    if (bounds) {
+      this._streets = uniqueEdges.filter(edge => this.filterOutBoundaryEdges(edge, bounds))
+    } else {
+      this._streets = uniqueEdges;
+    }
+    //Sub division of wards causes streets to be double-mapped. This fixes that.
+    let alreadySeen: Array<number> = [];
+    let indicies: Array<Array<number>> = [];
+    this.streets.forEach((outerStreet,i) => {
+      indicies[i] = [];
+      this.streets.forEach((street,j) => {
+        if (distanceFromLineToPoint(outerStreet, street[0]) == 0 && distanceFromLineToPoint(outerStreet, street[1]) == 0) {
+          if (i != j && !alreadySeen.includes(j)) {
+            if (i > j) {
+              if (!indicies[j].includes(i)) {
+                alreadySeen.push(j);
+                indicies[i].push(j);
+              }
+            } else {
+              alreadySeen.push(j);
+              indicies[i].push(j);
+            }
+          }
+        }
+      });
+    });
+    if (indicies.length > 0) {
+      let indiciesToRemove: Array<number> = [];
+      let segsToAdd: Array<Array<Vec>> = [];
+      indicies.forEach((indexArr,i) => {
+        if (indexArr.length > 1) {
+          let curIndicies: Array<number> = [];
+          let streets = [this.streets[i]]
+          indiciesToRemove.push(i);
+          indexArr.forEach((index) => {
+            streets.push(this.streets[index]);
+            curIndicies.push(index);
+          });
+          //console.log(streets);
+          const x = streets[0][0][0];
+          const y = streets[0][0][1];
+          const points = getUniqueNodes(streets as Array<VecPair>);
+          //check by all vert vs hor
+          if (streets.every((street => street[0][0] == x && street[1][0] == x))) {
+            //arrange points in order and then create new segments all along the total length.
+            points.sort((pointA, pointB) => pointA[1] - pointB[1]);
+          } else if (streets.every((street => street[0][1] == y && street[1][1] == y))) {
+            //arrange points in order and then create new segments all along the total length.
+            points.sort((pointA, pointB) => pointA[0] - pointB[0]);
+          } else {
+            //TODO: Figure out how to do this for diagonal streets
+            console.warn("Double-mapped diagonal ward streets not fixed!");
+          }
+          //console.log(points);
+          //add these new segs to an array
+          points.forEach((point,k) => {
+            if (k < points.length - 1) {
+              segsToAdd.push([point, points[k+1]]);
+            }
+          })
+          //mark down segments to be deleted
+          indiciesToRemove = [...indiciesToRemove, ...curIndicies];
+        }
+      });
+      //sort to be deleted indicies and removes the largest to smallest
+      indiciesToRemove.sort((a,b) => b - a);
+      indiciesToRemove.forEach(index => this.streets.splice(index,1));
+      //add new segments
+      segsToAdd.forEach((segment) => this.streets.push(segment));
+    }
+  }
 
   private calcEdges(subDivisions: Array<Array<Vec>>) {
     const wardEdges: Array<VecPair> = [];

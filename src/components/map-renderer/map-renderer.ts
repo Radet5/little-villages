@@ -1,5 +1,5 @@
 import { Container, Text } from 'pixi.js';
-import { centroid, Polygon } from '@thi.ng/geom';
+//import { centroid, Polygon } from '@thi.ng/geom';
 import type { Graphics } from 'pixi.js';
 import type { Village } from '../mapZone/village';
 
@@ -39,12 +39,12 @@ export class MapRenderer {
 
   renderIntersectionNumbers(village: Village) {
     const text = new Container;
-    //village.intersections.forEach((point,i) => {
-    //  const tx = new Text(i, { fontSize: 9, fontWeight: "800", fill: "0xffffff" });
-    //  tx.x = point[0]
-    //  tx.y = point[1]
-    //  text.addChild(tx);
-    //});
+    village.intersections.forEach((point,i) => {
+      const tx = new Text(i, { fontSize: 9, fontWeight: "800", fill: "0xffffff" });
+      tx.x = point[0]
+      tx.y = point[1]
+      text.addChild(tx);
+    });
     return text;
   }
 

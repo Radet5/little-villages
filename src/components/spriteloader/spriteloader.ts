@@ -8,52 +8,54 @@ export interface VillagerAnimationSet {
 }
 
 export class SpriteLoader {
-    private spritesheet: Spritesheet;
+    spritesheet: Spritesheet | {animations:{[string: string]: []}} = {animations:{something: []}};;
 
     public getVillagerAnimationSet(type: string) {
         let animations = {
                     walk: new PIXI.AnimatedSprite(this.spritesheet.animations.femmeWalk),
                     idle: new PIXI.AnimatedSprite(this.spritesheet.animations.femmeIdle)
                 };
-        switch (type) {
-            case "oldMasc":
-                animations = {
-                    walk: new PIXI.AnimatedSprite(this.spritesheet.animations.oldMascWalk),
-                    idle: new PIXI.AnimatedSprite(this.spritesheet.animations.oldMascIdle)
-                };
-                break;
-            case "childMasc":
-                animations = {
-                    walk: new PIXI.AnimatedSprite(this.spritesheet.animations.childMascWalk),
-                    idle: new PIXI.AnimatedSprite(this.spritesheet.animations.childMascIdle)
-                };
-                break;
-            case "adultMasc":
-                animations = {
-                    walk: new PIXI.AnimatedSprite(this.spritesheet.animations.mascWalk),
-                    idle: new PIXI.AnimatedSprite(this.spritesheet.animations.mascIdle)
-                };
-                break;
-            case "oldFemme":
-                animations = {
-                    walk: new PIXI.AnimatedSprite(this.spritesheet.animations.oldFemmeWalk),
-                    idle: new PIXI.AnimatedSprite(this.spritesheet.animations.oldFemmeIdle)
-                };
-                break;
-            case "childFemme":
-                animations = {
-                    walk: new PIXI.AnimatedSprite(this.spritesheet.animations.childFemmeWalk),
-                    idle: new PIXI.AnimatedSprite(this.spritesheet.animations.childFemmeIdle)
-                };
-                break;
-            default:
-                animations = {
-                    walk: new PIXI.AnimatedSprite(this.spritesheet.animations.femmeWalk),
-                    idle: new PIXI.AnimatedSprite(this.spritesheet.animations.femmeIdle)
-                };
-                break;
-        }
+        if (this.spritesheet) {
+            switch (type) {
+                case "oldMasc":
+                    animations = {
+                        walk: new PIXI.AnimatedSprite(this.spritesheet.animations.oldMascWalk),
+                        idle: new PIXI.AnimatedSprite(this.spritesheet.animations.oldMascIdle)
+                    };
+                    break;
+                case "childMasc":
+                    animations = {
+                        walk: new PIXI.AnimatedSprite(this.spritesheet.animations.childMascWalk),
+                        idle: new PIXI.AnimatedSprite(this.spritesheet.animations.childMascIdle)
+                    };
+                    break;
+                case "adultMasc":
+                    animations = {
+                        walk: new PIXI.AnimatedSprite(this.spritesheet.animations.mascWalk),
+                        idle: new PIXI.AnimatedSprite(this.spritesheet.animations.mascIdle)
+                    };
+                    break;
+                case "oldFemme":
+                    animations = {
+                        walk: new PIXI.AnimatedSprite(this.spritesheet.animations.oldFemmeWalk),
+                        idle: new PIXI.AnimatedSprite(this.spritesheet.animations.oldFemmeIdle)
+                    };
+                    break;
+                case "childFemme":
+                    animations = {
+                        walk: new PIXI.AnimatedSprite(this.spritesheet.animations.childFemmeWalk),
+                        idle: new PIXI.AnimatedSprite(this.spritesheet.animations.childFemmeIdle)
+                    };
+                    break;
+                default:
+                    animations = {
+                        walk: new PIXI.AnimatedSprite(this.spritesheet.animations.femmeWalk),
+                        idle: new PIXI.AnimatedSprite(this.spritesheet.animations.femmeIdle)
+                    };
+                    break;
+            }
 
+        }
         return animations;
     }
 
