@@ -1,5 +1,4 @@
 import type { Vec, VecPair } from '@thi.ng/vectors/api'
-import { v4 as uuidv4 } from 'uuid';
 import { DVMesh } from '@thi.ng/geom-voronoi';
 import { getUniqueNodes, seededRandomNumberList } from '../../utils';
 import { MapZone, LocationType } from "./mapzone";
