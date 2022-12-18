@@ -46,6 +46,7 @@ export class Village extends MapZone {
       console.log("number street corners", this.intersections.length);
       console.log("bigolMap size", this.connectionMatrix.length);
       this.buildWards();
+      console.log(this);
   }
 
   private buildWards() {
@@ -75,7 +76,7 @@ export class Village extends MapZone {
       ward.calcStreets(this.boundaries);
       ward.buildConnectionMatrix();
     });
-    console.log(this._wards);
+    //console.log(this._wards);
   }
 
   private calcEdges(mesh: DVMesh<number>, bounds: Array<Vec>) {

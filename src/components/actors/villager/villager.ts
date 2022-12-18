@@ -77,17 +77,21 @@ export class Villager {
     return this.sprites;
   }
 
-  private findClosestPoint(points: Array<Vec>) {
+  private findClosestPointTo(points: Array<Vec>, testPoint: Vec) {
     let bestDistance = Infinity;
     let closestNodeIndex = -1;
     points.forEach((node, i) => {
-      const distance = dist(this.position, node);
+      const distance = dist(testPoint, node);
       if (distance < bestDistance) {
         bestDistance = distance;
         closestNodeIndex = i;
       }
     });
     return closestNodeIndex;
+  }
+
+  private findClosestPoint(points: Array<Vec>) {
+    return this.findClosestPointTo(points, this.position);
   }
 
   private findClosestNode() {
@@ -181,9 +185,12 @@ export class Villager {
   private findPath(startIndex: number, toObject: MapZoneInterface) {
     if (this.location.type == LocationType.village) {
       if (this.destination.type == LocationType.ward || this.destination.type == LocationType.lot) {
-        const closestWardNode = toObject.boundaries[this.findClosestPoint(toObject.boundaries)];
-        if (!this.village.intersectionLookup[closestWardNode[0]]) debugger;
-        const endIndex = this.village.intersectionLookup[closestWardNode[0]][closestWardNode[1]];
+        const entranceNodes = toObject.boundaries.filter((node) => {
+          return this.village.intersectionLookup[node[0]] && this.village.intersectionLookup[node[0]][node[1]]
+        })
+        const closestEntranceNode = entranceNodes[this.findClosestPoint(entranceNodes)];
+        if (!this.village.intersectionLookup[closestEntranceNode[0]]) debugger;
+        const endIndex = this.village.intersectionLookup[closestEntranceNode[0]][closestEntranceNode[1]];
         this.path = {
           toType: LocationType.ward,
           indicies: shortestPath(startIndex, endIndex, this.village.connectionMatrix, this.village.intersections),
@@ -200,8 +207,12 @@ export class Villager {
             toObject: toObject,
           }
         } else {//redirect to village
-          //TODO: Fix this bug where the ward is in the corner of the village, sometimes the closest boundary point is the corner of the map which isnt in the cities' intersections
-          const closestExitNode = this.location.object.boundaries[this.findClosestPoint(this.location.object.boundaries)];
+          //nodes not registered as intersections aren't even an option
+          //villager picks the closest node to the destination.
+          const exitNodes = this.location.object.boundaries.filter((node) => {
+            return this.village.intersectionLookup[node[0]] && this.village.intersectionLookup[node[0]][node[1]]
+          });
+          const closestExitNode = exitNodes[this.findClosestPointTo(exitNodes, this.destination.location)];
           const endIndex = this.location.object.intersectionLookup[closestExitNode[0]][closestExitNode[1]];
           this.path ={
             toType: LocationType.village,
@@ -261,8 +272,8 @@ export class Villager {
         this.animations.idle.visible = true;
         this.animations.walk.visible = false;
         const number = Math.random();
-        if (number > 0.999) this.pickDestination();
-        //this.pickDestination();
+        //if (number > 0.999) this.pickDestination();
+        this.pickDestination();
     } else {
         this.animations.walk.visible = true;
         this.animations.idle.visible = false;

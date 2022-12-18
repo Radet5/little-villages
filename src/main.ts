@@ -28,7 +28,7 @@ let app = new PIXI.Application( {
 document.body.appendChild(app.view as HTMLCanvasElement);
 
 // Generate a list of random points
-const voronoiPoints = getRandomPoints(seed, 20, villageDimensions, { x: xOff, y: yOff });
+const voronoiPoints = getRandomPoints(seed, 10, villageDimensions, { x: xOff, y: yOff });
 
 // Generate the voronoi diagram
 const village = new Village(seed, "Evansville", "0", voronoiPoints, bounds);
