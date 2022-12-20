@@ -37,7 +37,7 @@ export class Ward extends MapZone {
     } else {
       this._streets = uniqueEdges;
     }
-    //Sub division of wards causes streets to be double-mapped. This fixes that.
+    //Sub division of wards causes streets to be double-mapped. This fixes that for many cases.
     let alreadySeen: Array<number> = [];
     let indicies: Array<Array<number>> = [];
     this.streets.forEach((outerStreet,i) => {
@@ -62,7 +62,7 @@ export class Ward extends MapZone {
       let indiciesToRemove: Array<number> = [];
       let segsToAdd: Array<Array<Vec>> = [];
       indicies.forEach((indexArr,i) => {
-        if (indexArr.length > 1) {
+        if (indexArr.length > 0) {
           let curIndicies: Array<number> = [];
           let streets = [this.streets[i]]
           indiciesToRemove.push(i);
@@ -82,8 +82,7 @@ export class Ward extends MapZone {
             //arrange points in order and then create new segments all along the total length.
             points.sort((pointA, pointB) => pointA[0] - pointB[0]);
           } else {
-            //TODO: Figure out how to do this for diagonal streets
-            console.warn("Double-mapped diagonal ward streets not fixed!");
+            points.sort((pointA, pointB) => pointA[0] - pointB[0]);
           }
           //console.log(points);
           //add these new segs to an array
