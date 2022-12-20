@@ -4,6 +4,7 @@ import { villagerSpritesheetData } from './data/villager-spritesheet-data';
 export interface VillagerAnimationSet {
     walk: AnimatedSprite;
     idle: AnimatedSprite;
+    action: AnimatedSprite;
     [string: string]: AnimatedSprite
 }
 
@@ -13,44 +14,51 @@ export class SpriteLoader {
     public getVillagerAnimationSet(type: string) {
         let animations = {
                     walk: new PIXI.AnimatedSprite(this.spritesheet.animations.femmeWalk),
-                    idle: new PIXI.AnimatedSprite(this.spritesheet.animations.femmeIdle)
+                    idle: new PIXI.AnimatedSprite(this.spritesheet.animations.femmeIdle),
+                    action: new PIXI.AnimatedSprite(this.spritesheet.animations.femmeAction)
                 };
         if (this.spritesheet) {
             switch (type) {
                 case "oldMasc":
                     animations = {
                         walk: new PIXI.AnimatedSprite(this.spritesheet.animations.oldMascWalk),
-                        idle: new PIXI.AnimatedSprite(this.spritesheet.animations.oldMascIdle)
+                        idle: new PIXI.AnimatedSprite(this.spritesheet.animations.oldMascIdle),
+                        action: new PIXI.AnimatedSprite(this.spritesheet.animations.oldMascAction)
                     };
                     break;
                 case "childMasc":
                     animations = {
                         walk: new PIXI.AnimatedSprite(this.spritesheet.animations.childMascWalk),
-                        idle: new PIXI.AnimatedSprite(this.spritesheet.animations.childMascIdle)
+                        idle: new PIXI.AnimatedSprite(this.spritesheet.animations.childMascIdle),
+                        action: new PIXI.AnimatedSprite(this.spritesheet.animations.childMascAction)
                     };
                     break;
                 case "adultMasc":
                     animations = {
                         walk: new PIXI.AnimatedSprite(this.spritesheet.animations.mascWalk),
-                        idle: new PIXI.AnimatedSprite(this.spritesheet.animations.mascIdle)
+                        idle: new PIXI.AnimatedSprite(this.spritesheet.animations.mascIdle),
+                        action: new PIXI.AnimatedSprite(this.spritesheet.animations.mascAction)
                     };
                     break;
                 case "oldFemme":
                     animations = {
                         walk: new PIXI.AnimatedSprite(this.spritesheet.animations.oldFemmeWalk),
-                        idle: new PIXI.AnimatedSprite(this.spritesheet.animations.oldFemmeIdle)
+                        idle: new PIXI.AnimatedSprite(this.spritesheet.animations.oldFemmeIdle),
+                        action: new PIXI.AnimatedSprite(this.spritesheet.animations.oldFemmeAction)
                     };
                     break;
                 case "childFemme":
                     animations = {
                         walk: new PIXI.AnimatedSprite(this.spritesheet.animations.childFemmeWalk),
-                        idle: new PIXI.AnimatedSprite(this.spritesheet.animations.childFemmeIdle)
+                        idle: new PIXI.AnimatedSprite(this.spritesheet.animations.childFemmeIdle),
+                        action: new PIXI.AnimatedSprite(this.spritesheet.animations.childFemmeAction)
                     };
                     break;
                 default:
                     animations = {
                         walk: new PIXI.AnimatedSprite(this.spritesheet.animations.femmeWalk),
-                        idle: new PIXI.AnimatedSprite(this.spritesheet.animations.femmeIdle)
+                        idle: new PIXI.AnimatedSprite(this.spritesheet.animations.femmeIdle),
+                        action: new PIXI.AnimatedSprite(this.spritesheet.animations.femmeAction)
                     };
                     break;
             }

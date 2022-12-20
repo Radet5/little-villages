@@ -612,15 +612,21 @@ export const villagerSpritesheetData = {
     animations: {
         femmeWalk: ['Woman_walk_01.png', 'Woman_walk_02.png', 'Woman_walk_03.png', 'Woman_walk_04.png', 'Woman_walk_05.png', 'Woman_walk_06.png', ],
         femmeIdle: ['Woman_idle_01.png', 'Woman_idle_02.png', 'Woman_idle_03.png', 'Woman_idle_04.png'],
+        femmeAction: ['Woman_attack_01.png', 'Woman_attack_02.png', 'Woman_attack_03.png', 'Woman_attack_04.png'],
         mascWalk: ['Man_walk_01.png', 'Man_walk_02.png', 'Man_walk_03.png', 'Man_walk_04.png', 'Man_walk_05.png', 'Man_walk_06.png', ],
         mascIdle: ['Man_idle_01.png', 'Man_idle_02.png', 'Man_idle_03.png', 'Man_idle_04.png'],
+        mascAction: ['Man_attack_01.png', 'Man_attack_02.png', 'Man_attack_03.png', 'Man_attack_04.png'],
         oldFemmeWalk: ['Old_woman_walk_01.png', 'Old_woman_walk_02.png', 'Old_woman_walk_03.png', 'Old_woman_walk_04.png', 'Old_woman_walk_05.png', 'Old_woman_walk_06.png', ],
         oldFemmeIdle: ['Old_woman_idle_01.png', 'Old_woman_idle_02.png', 'Old_woman_idle_03.png', 'Old_woman_idle_04.png'],
+        oldFemmeAction: ['Old_woman_attack_01.png', 'Old_woman_attack_02.png', 'Old_woman_attack_03.png', 'Old_woman_attack_04.png'],
         oldMascWalk: ['Old_man_walk_01.png', 'Old_man_walk_02.png', 'Old_man_walk_03.png', 'Old_man_walk_04.png', 'Old_man_walk_05.png', 'Old_man_walk_06.png', ],
         oldMascIdle: ['Old_man_idle_01.png', 'Old_man_idle_02.png', 'Old_man_idle_03.png', 'Old_man_idle_04.png'],
+        oldMascAction: ['Old_man_attack_01.png', 'Old_man_attack_02.png', 'Old_man_attack_03.png', 'Old_man_attack_04.png'],
         childFemmeWalk: ['Girl_walk_01.png', 'Girl_walk_02.png', 'Girl_walk_03.png', 'Girl_walk_04.png', 'Girl_walk_05.png', 'Girl_walk_06.png', ],
         childFemmeIdle: ['Girl_idle_01.png', 'Girl_idle_02.png', 'Girl_idle_03.png', 'Girl_idle_04.png'],
+        childFemmeAction: ['Girl_attack_01.png', 'Girl_attack_02.png', 'Girl_attack_03.png', 'Girl_attack_04.png'],
         childMascWalk: ['Boy_walk_01.png', 'Boy_walk_02.png', 'Boy_walk_03.png', 'Boy_walk_04.png', 'Boy_walk_05.png', 'Boy_walk_06.png', ],
         childMascIdle: ['Boy_idle_01.png', 'Boy_idle_02.png', 'Boy_idle_03.png', 'Boy_idle_04.png'],
+        childMascAction: ['Boy_attack_01.png', 'Boy_attack_02.png', 'Boy_attack_03.png', 'Boy_attack_04.png'],
     }
 }

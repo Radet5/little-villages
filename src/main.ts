@@ -7,6 +7,7 @@ import { Villager } from './components/actors/villager/villager';
 import { Village } from './components/mapZone/village';
 import { MapRenderer } from './components/map-renderer/map-renderer';
 
+import { Viewport } from 'pixi-viewport';
 
 main();
 
@@ -31,6 +32,24 @@ async function main() {
   });
   document.body.appendChild(app.view as HTMLCanvasElement);
 
+  const viewport = new Viewport({
+    screenWidth: window.innerWidth,
+    screenHeight: window.innerHeight,
+    worldWidth: resolution.width,
+    worldHeight: resolution.height,
+
+    interaction: app.renderer.plugins.interaction // the interaction module is important for wheel to work properly when renderer.view is placed or scaled
+  });
+
+  // add the viewport to the stage
+  app.stage.addChild(viewport)
+
+  // activate plugins
+  viewport
+      .drag()
+      .pinch()
+      .wheel()
+
   // Generate a list of random points
   const voronoiPoints = getRandomPoints(seed, 10, villageDimensions, { x: xOff, y: yOff });
 
@@ -46,9 +65,9 @@ async function main() {
   //});
 
   const cityDrawing = new PIXI.Container();
-  cityDrawing.interactive = true;
+  //cityDrawing.interactive = true;
 
-  cityDrawing.on('pointerdown', onClick);
+  //cityDrawing.on('pointerdown', onClick);
 
   const mapRenderer = new MapRenderer();
 
@@ -59,8 +78,8 @@ async function main() {
 
   cityDrawing.addChild(graphics);
   //Add the graphics to the stage
-  app.stage.addChild(cityDrawing);
-  app.stage.addChild(text);
+  viewport.addChild(cityDrawing);
+  viewport.addChild(text);
 
   const spriteLoader = new SpriteLoader();
   await spriteLoader.loadSpriteSheet();
@@ -69,7 +88,7 @@ async function main() {
     const villager = new Villager(spriteLoader, village);
     villagers.push(villager);
 
-    app.stage.addChild(villager.getSprites());
+    viewport.addChild(villager.getSprites());
   }
 
   function onClick(e: PIXI.FederatedPointerEvent) {
@@ -92,7 +111,7 @@ async function main() {
     text = mapRenderer.renderWardNames(village);
     //const numbers = mapRenderer.renderIntersectionNumbers(village);
     //text.addChild(numbers);
-    app.stage.addChild(text);
+    viewport.addChild(text);
   }
 
 

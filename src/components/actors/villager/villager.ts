@@ -8,19 +8,35 @@ import { Container } from 'pixi.js';
 import type { SpriteLoader, VillagerAnimationSet } from '../../spriteloader/spriteloader';
 import { Village } from '../../mapZone/village';
 import { MapZoneInterface, LocationType } from '../../mapZone/mapzone';
+import { LivingBeing, LivingBeingStatus } from '../living-being/living-being';
 
 enum Age {
-    child = "child",
-    adult = "adult",
-    old = "old",
+  child = "child",
+  adult = "adult",
+  old = "old",
 };
 
 enum GenderPresentation {
-    femme = "Femme",
-    masc = "Masc",
+  femme = "Femme",
+  masc = "Masc",
 };
 
-export class Villager {
+interface LivingBeingIntentionInterface {
+  [intentionName: string]: {
+    utility: (status: LivingBeingStatus) => number;
+  }
+};
+
+const intentions: LivingBeingIntentionInterface = {
+  eat: {
+    utility: (status: LivingBeingStatus) => {return Math.pow(1.0 - status.sustanance, 5);}
+  },
+  explore: {
+    utility: (status: LivingBeingStatus) => {return 0.2;}
+  }
+}
+
+export class Villager extends LivingBeing {
   
   private speed: number = 0.5;
   private _position: Vec2 = new Vec2 ([0, 0]);
@@ -33,10 +49,17 @@ export class Villager {
   private destination: {id: string, type: LocationType, index: number, location: Vec} = {id: "", type: LocationType.none, index: -1, location: [0,0]};
   private _village: Village;
 
+  private action: string = "nothing";
+
+  private inventory = {
+    food: 10,
+  };
+
   private age: Age;
   private genderPresentation: GenderPresentation;
 
   constructor(spriteLoader: SpriteLoader, village: Village) {
+    super();
     this._village = village;
     this.location = {
       id: this.village.id,
@@ -122,6 +145,13 @@ export class Villager {
     });
     this.sprites.scale.x = -0.5;
     this.sprites.scale.y = 0.5;
+    this.sprites.interactive = true;
+    this.sprites.on('pointerdown', (e) => this.onClick(e, this));
+  }
+
+  private onClick(e, self) {
+    console.log(self.status);
+    console.log(self.inventory);
   }
 
   private rollForAge() {
@@ -260,6 +290,7 @@ export class Villager {
         if (this.location.type == this.destination.type && this.location.nodeIndex == this.destination.index) {
           this.path = null;
           this.destination = {id: "", type: LocationType.none, index: -1, location: [0,0]};
+          if (this.action == "findFood") this.inventory.food += Math.random() * 100;
         } else {
           const currentNodeLocation = this.location.object.intersections[this.location.nodeIndex];
           this.location.object = this.path.toObject;
@@ -276,18 +307,70 @@ export class Villager {
     if (!this.path) {
         this.animations.idle.visible = true;
         this.animations.walk.visible = false;
+        this.animations.action.visible = false;
         const number = Math.random();
         if (number > 0.999) this.pickDestination();
         //this.pickDestination();
     } else {
         this.animations.walk.visible = true;
         this.animations.idle.visible = false;
+        this.animations.action.visible = false;
+        this.move(delta);
+    }
+  }
+
+  private findFood(delta: number) {
+    if (!this.path) {
+      this.animations.idle.visible = true;
+      this.animations.walk.visible = false;
+      this.animations.action.visible = false;
+      this.pickDestination();
+    } else {
+        this.animations.walk.visible = true;
+        this.animations.idle.visible = false;
+        this.animations.action.visible = false;
         this.move(delta);
     }
   }
 
   public update(delta: number) {
-    this.decide(delta);
+    const intention = Object.keys(intentions).reduce((prevKey, curKey) => {
+      const prevInt = intentions[prevKey];
+      const curInt = intentions[curKey];
+      if (prevInt.utility(this.status) > curInt.utility(this.status)) return prevKey;
+      else return curKey;
+    });
+
+    if (intention == 'eat') {
+      if (this.inventory.food > 0) {
+        this.action = "eating";
+      } else {
+        this.action = "findFood";
+      }
+
+    } else if (this.action == "nothing") {
+      this.action = "exploring"
+    }
+
+    if (this.action == "eating") {
+      this.animations.idle.visible = false;
+      this.animations.walk.visible = false;
+      this.animations.action.visible = true;
+      if (this.sustanance <= 0.6) {
+        this.inventory.food -= 0.1;
+        this.sustanance += delta * Math.random() * 0.009;
+      } else {
+        this.action = "nothing";
+      }
+    } else if (this.action == "findFood") {
+      this.findFood(delta);
+    } else {
+      this.decide(delta);
+    }
+    //console.log(this.action);
+
+    this.energy -= 0.0001 * delta;
+    this.sustanance -= 0.0001 * delta;
   }
 
 }
