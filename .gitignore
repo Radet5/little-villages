@@ -1,0 +1,31 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Art assets — ignored by default, except the spritesheet the app needs to build
+src/assets/art/**
+!src/assets/art/
+!src/assets/art/sprites/
+!src/assets/art/sprites/villagers/
+!src/assets/art/sprites/villagers/villagers_spritesheet.png
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
