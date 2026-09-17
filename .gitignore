@@ -7,8 +7,12 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# Art assets
-src/assets/art
+# Art assets — ignored by default, except the spritesheet the app needs to build
+src/assets/art/**
+!src/assets/art/
+!src/assets/art/sprites/
+!src/assets/art/sprites/villagers/
+!src/assets/art/sprites/villagers/villagers_spritesheet.png
 
 node_modules
 dist
