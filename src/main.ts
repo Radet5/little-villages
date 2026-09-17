@@ -15,9 +15,14 @@ async function main() {
   const seed = "bongo";
   const population = 29;
   const villageDimensions = { width: 1000, height: 820 };
-  const resolution = { width: 1380, height: 920 };
   const xOff = 200;
   const yOff = 50;
+  // The village is generated in fixed world coordinates. The stage is scaled to fit
+  // whatever viewport we get, so generation never depends on the size of the screen.
+  const world = {
+    width: villageDimensions.width + xOff * 2,
+    height: villageDimensions.height + yOff * 2,
+  };
   const bounds = [
     [0+xOff, 0+yOff],
     [0+xOff, villageDimensions.height+yOff],
@@ -25,11 +30,25 @@ async function main() {
     [villageDimensions.width+xOff, 0+yOff],
   ]
   let app = new PIXI.Application( {
-    ...resolution,
+    resizeTo: window,
     backgroundColor: 0x785534,
     antialias: true,
+    autoDensity: true,
+    resolution: window.devicePixelRatio || 1,
   });
   document.body.appendChild(app.view as HTMLCanvasElement);
+
+  // Scale the whole stage to fit the viewport, letterboxed and centred.
+  function fitToViewport() {
+    const scale = Math.min(window.innerWidth / world.width, window.innerHeight / world.height);
+    app.stage.scale.set(scale);
+    app.stage.position.set(
+      (window.innerWidth - world.width * scale) / 2,
+      (window.innerHeight - world.height * scale) / 2,
+    );
+  }
+  fitToViewport();
+  window.addEventListener('resize', fitToViewport);
 
   // Generate a list of random points
   const voronoiPoints = getRandomPoints(seed, 10, villageDimensions, { x: xOff, y: yOff });
@@ -73,18 +92,14 @@ async function main() {
   }
 
   function onClick(e: PIXI.FederatedPointerEvent) {
-    console.log(e);
-    if (app.view.getBoundingClientRect) {
-      const rect = app.view.getBoundingClientRect()
-      const xPos = e.client.x - rect.x;
-      const yPos = e.client.y - rect.y;
-      console.log(xPos, yPos);
-      village.addWard([xPos, yPos]);
+    // toLocal maps screen coordinates into stage coordinates, so this keeps
+    // working at whatever scale and offset fitToViewport has applied.
+    const point = app.stage.toLocal(e.global);
+    village.addWard([point.x, point.y]);
 
-      villagers.forEach(villager => {
-        villager.refreshMapInfo();
-      })
-    }
+    villagers.forEach(villager => {
+      villager.refreshMapInfo();
+    })
     graphics.clear();
     mapRenderer.drawVillage(graphics, village, bounds, villageDimensions);
     text.children.forEach((child) => child.destroy());
