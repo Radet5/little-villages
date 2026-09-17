@@ -2,6 +2,8 @@
 
 A procedural medieval village generator, rendered in the browser with PIXI.js. Give it a seed string and it lays out wards, subdivides them into building lots, derives a street network from the lot edges, and turns villagers loose to walk it.
 
+**Live:** https://radet5.github.io/little-villages/
+
 Click anywhere on the map to drop a new ward site — the village regenerates around it and every villager re-routes from wherever they were standing.
 
 ## How a village gets built
@@ -21,7 +23,9 @@ TypeScript · PIXI.js 7 · Vite · [@thi.ng](https://thi.ng) geom / geom-voronoi
 
 ```sh
 yarn install
-yarn dev
+yarn dev        # vite dev server
+yarn build      # tsc && vite build
+yarn deploy     # build and publish to gh-pages
 ```
 
 Seed, population and village dimensions are constants at the top of `src/main.ts`.
